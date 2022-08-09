@@ -1,11 +1,16 @@
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
+import dotenv
 import os
 import sys
 
 
 def main():
     """Run administrative tasks."""
+
+    dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+    dotenv.load_dotenv(dotenv_path)
+
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mailing.settings')
     try:
         from django.core.management import execute_from_command_line
