@@ -1,13 +1,18 @@
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, get_list_or_404
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.exceptions import ValidationError
 from . import serializers, models
 
 
-class CreateClientView(APIView):
+class GetClientsOrCreateClientView(APIView):
     """
-    API for add client to DB
+    API for get all clients with or without filters or add client to DB by serializer
+
+    Example of url to GET method:
+
+        url = api/v1/clients/?tag=qwerty
 
     Example of POST method:
         {
@@ -19,6 +24,14 @@ class CreateClientView(APIView):
 
     """
 
+    def get(self, request):
+        query_params = {field: value for field, value in request.query_params.items()}
+        list_of_clients = get_list_or_404(models.Client, **query_params)
+        serializer = serializers.ClientSerializer(list_of_clients, many=True)
+        validated_data = serializer.data
+
+        return Response(data=validated_data, status=status.HTTP_200_OK)
+
     def post(self, request):
         serializer = serializers.ClientSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -29,9 +42,9 @@ class CreateClientView(APIView):
         return Response(data=validated_data, status=status.HTTP_200_OK)
 
 
-class UpdateClientView(APIView):
+class UpdateOrDeleteClientView(APIView):
     """
-        API for update client
+        API for get, update or delete client
 
         Example of PUT method:
             {
@@ -41,14 +54,40 @@ class UpdateClientView(APIView):
             "timezone": "Europe/Moscow"
             }
 
+            OR
+
+            {
+            "tag": "qwerty"
+            }
+
         """
 
-    def put(self, request, client_id):
-        serializer = serializers.ClientSerializer(data=request.data)
+    def get(self, request, client_id):
+        client = get_object_or_404(models.Client, id=client_id)
+
+        serializer = serializers.ClientSerializer(client, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.data
 
+        return Response(data=validated_data, status=status.HTTP_200_OK)
+
+    def put(self, request, client_id):
         client = get_object_or_404(models.Client, id=client_id)
-        serializer.update(instance=client, validated_data=validated_data)
+        data = request.data
+        for field, value in data.items():
+            if hasattr(client, field):
+                setattr(client, field, value)
+            else:
+                raise ValidationError('Invalid parameters')
+        client.save()
+
+        serializer = serializers.ClientSerializer(client, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.data
 
         return Response(data=validated_data, status=status.HTTP_200_OK)
+
+    def delete(self, request, client_id):
+        client = get_object_or_404(models.Client, id=client_id)
+        client.delete()
+        return Response(data={'message': 'success'}, status=status.HTTP_200_OK)
