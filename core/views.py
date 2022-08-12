@@ -1,10 +1,11 @@
-from django.shortcuts import get_object_or_404, get_list_or_404
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from . import serializers, models
 from .services.clients import ClientServices
+from .services.mailing_list import MailingListServices
 
 
 class GetClientsOrCreateClientView(APIView):
@@ -28,12 +29,12 @@ class GetClientsOrCreateClientView(APIView):
     def get(self, request):
         query_params = {field: value for field, value in request.query_params.items()}
         validated_data = ClientServices.validate_data_for_get_method_to_get_list(query_params=query_params)
-
         return Response(data=validated_data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        validated_data = ClientServices.validate_data_for_post_method(data=request.data)
-        ClientServices.create(validated_data=validated_data)
+        serializer = serializers.ClientSerializer(data=request.data)
+        validated_data = ClientServices.validate_data_for_post_method(serializer=serializer)
+        ClientServices.create(validated_data=validated_data, serializer=serializer)
 
 
 
@@ -65,13 +66,19 @@ class UpdateOrDeleteClientView(APIView):
             client_id=client_id,
             data=request.data
         )
-
         return Response(data=validated_data, status=status.HTTP_200_OK)
 
     def put(self, request, client_id):
         data = request.data
         client = ClientServices.update(client_id=client_id, data=data)
-        validated_data = ClientServices.validate_data_for_put_method(client_instance=client, data=data)
+
+        validated_data = ClientServices.validate_data_for_put_method(
+            client_instance=client,
+            data=data
+        )
+
+
+
         return Response(data=validated_data, status=status.HTTP_200_OK)
 
     def delete(self, request, client_id):
@@ -95,18 +102,15 @@ class GetMailingListOrCreateMailing(APIView):
     """
 
     def get(self, request):
-        mailing_list = get_list_or_404(models.MailingList)
-        serializer = serializers.MailingListSerializer(mailing_list, many=True)
-        validated_data = serializer.data
-
+        validated_data = MailingListServices.validate_data_for_get_method_to_get_list()
         return Response(data=validated_data, status=status.HTTP_200_OK)
 
     def post(self, request):
         serializer = serializers.MailingListSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        validated_data = MailingListServices.validate_data_for_post_method(serializer=serializer)
+        MailingListServices.create(validated_data=validated_data, serializer=serializer)
 
-        validated_data = serializer.data
-        serializer.create(validated_data)
+
 
         return Response(data=validated_data, status=status.HTTP_200_OK)
 
@@ -131,32 +135,26 @@ class UpdateOrDeleteMailingListView(APIView):
 
         """
 
-    def get(self, request, client_id):
-        client = get_object_or_404(models.Client, id=client_id)
-
-        serializer = serializers.ClientSerializer(client, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        validated_data = serializer.data
-
+    def get(self, request, mailing_id):
+        validated_data = MailingListServices.validate_data_for_get_method_to_get_detail_info(
+            mailing_id=mailing_id,
+            data=request.data
+        )
         return Response(data=validated_data, status=status.HTTP_200_OK)
 
-    def put(self, request, client_id):
-        client = get_object_or_404(models.Client, id=client_id)
+    def put(self, request, mailing_id):
         data = request.data
-        for field, value in data.items():
-            if hasattr(client, field):
-                setattr(client, field, value)
-            else:
-                raise ValidationError('Invalid parameters')
-        client.save()
+        mailing_instance = MailingListServices.update(mailing_id=mailing_id, data=data)
 
-        serializer = serializers.ClientSerializer(client, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        validated_data = serializer.data
+        validated_data = MailingListServices.validate_data_for_put_method(
+            mailing_instance=mailing_instance,
+            data=data
+        )
+
+
 
         return Response(data=validated_data, status=status.HTTP_200_OK)
 
-    def delete(self, request, client_id):
-        client = get_object_or_404(models.Client, id=client_id)
-        client.delete()
+    def delete(self, request, mailing_id):
+        MailingListServices.delete(mailing_id=mailing_id)
         return Response(data={'message': 'success'}, status=status.HTTP_200_OK)

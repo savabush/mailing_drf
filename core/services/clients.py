@@ -1,12 +1,13 @@
 from core import serializers, models
 from django.shortcuts import get_list_or_404, get_object_or_404
 from rest_framework.exceptions import ValidationError
+from core.services.abstract_services import AbstractServices
 
-class ClientServices:
+
+class ClientServices(AbstractServices):
 
     @classmethod
-    def validate_data_for_post_method(cls, data):
-        serializer = serializers.ClientSerializer(data=data)
+    def validate_data_for_post_method(cls, serializer):
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.data
         return validated_data
@@ -34,8 +35,8 @@ class ClientServices:
         return validated_data
 
     @classmethod
-    def create(cls, validated_data):
-        serializers.create(validated_data)
+    def create(cls, validated_data, serializer):
+        serializer.create(validated_data)
 
     @classmethod
     def update(cls, client_id, data):
