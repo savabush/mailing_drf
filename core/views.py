@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
 from . import serializers, models
+from .services.clients import ClientServices
 
 
 class GetClientsOrCreateClientView(APIView):
@@ -26,18 +27,15 @@ class GetClientsOrCreateClientView(APIView):
 
     def get(self, request):
         query_params = {field: value for field, value in request.query_params.items()}
-        list_of_clients = get_list_or_404(models.Client, **query_params)
-        serializer = serializers.ClientSerializer(list_of_clients, many=True)
-        validated_data = serializer.data
+        validated_data = ClientServices.validate_data_for_get_method_to_get_list(query_params=query_params)
 
         return Response(data=validated_data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        serializer = serializers.ClientSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        validated_data = ClientServices.validate_data_for_post_method(data=request.data)
+        ClientServices.create(validated_data=validated_data)
 
-        validated_data = serializer.data
-        serializer.create(validated_data)
+
 
         return Response(data=validated_data, status=status.HTTP_200_OK)
 
@@ -63,33 +61,21 @@ class UpdateOrDeleteClientView(APIView):
         """
 
     def get(self, request, client_id):
-        client = get_object_or_404(models.Client, id=client_id)
-
-        serializer = serializers.ClientSerializer(client, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        validated_data = serializer.data
+        validated_data = ClientServices.validate_data_for_get_method_to_get_detail_info(
+            client_id=client_id,
+            data=request.data
+        )
 
         return Response(data=validated_data, status=status.HTTP_200_OK)
 
     def put(self, request, client_id):
-        client = get_object_or_404(models.Client, id=client_id)
         data = request.data
-        for field, value in data.items():
-            if hasattr(client, field):
-                setattr(client, field, value)
-            else:
-                raise ValidationError('Invalid parameters')
-        client.save()
-
-        serializer = serializers.ClientSerializer(client, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        validated_data = serializer.data
-
+        client = ClientServices.update(client_id=client_id, data=data)
+        validated_data = ClientServices.validate_data_for_put_method(client_instance=client, data=data)
         return Response(data=validated_data, status=status.HTTP_200_OK)
 
     def delete(self, request, client_id):
-        client = get_object_or_404(models.Client, id=client_id)
-        client.delete()
+        ClientServices.delete(client_id=client_id)
         return Response(data={'message': 'success'}, status=status.HTTP_200_OK)
 
 
