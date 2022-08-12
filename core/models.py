@@ -25,14 +25,14 @@ class MailingList(models.Model):
         verbose_name_plural = 'Mailing List'
 
     def __str__(self):
-        return self.datetime_of_end_mailing
+        return str(self.datetime_of_end_mailing)
 
 
 class Message(models.Model):
     datetime = models.DateTimeField(auto_now=True)
     status = models.BooleanField()
     mailing_id = models.OneToOneField(MailingList, on_delete=models.CASCADE, related_name='mailing')
-    client_id = models.OneToOneField(MailingList, on_delete=models.CASCADE, related_name='client')
+    client_id = models.OneToOneField(Client, on_delete=models.CASCADE, related_name='client')
 
     def __str__(self):
-        return self.datetime
+        return str(self.datetime)
