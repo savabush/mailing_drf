@@ -9,21 +9,9 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class MessageCountSerializer(serializers.ModelSerializer):
-    count_of_sent = serializers.SerializerMethodField()
-
-    class Meta:
-        model = models.Message
-        fields = ['count_of_sent', 'status']
-
-    def get_count_of_sent(self, obj):
-        queryset = self.Meta.model.objects
-        queryset_of_sent_messages = queryset.filter(status=True, mailing_id=obj.mailing_id)
-        return len(queryset_of_sent_messages)
-
-
 class MailingListSerializer(serializers.ModelSerializer):
-    detail_info = MessageCountSerializer(read_only=True, source='mailing')
+    count_of_sent = serializers.SerializerMethodField(read_only=True)
+    count_of_unsent = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = models.MailingList
@@ -32,5 +20,12 @@ class MailingListSerializer(serializers.ModelSerializer):
             'text',
             'filters',
             'datetime_of_end_mailing',
-            'detail_info'
+            'count_of_sent',
+            'count_of_unsent'
         ]
+
+    def get_count_of_sent(self, obj):
+        return len(obj.mailing.filter(status=True))
+
+    def get_count_of_unsent(self, obj):
+        return len(obj.mailing.filter(status=False))

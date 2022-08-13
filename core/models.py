@@ -30,9 +30,9 @@ class MailingList(models.Model):
 
 class Message(models.Model):
     datetime = models.DateTimeField(auto_now=True)
-    status = models.BooleanField()
-    mailing_id = models.OneToOneField(MailingList, on_delete=models.CASCADE, related_name='mailing')
-    client_id = models.OneToOneField(Client, on_delete=models.CASCADE, related_name='client')
+    status = models.BooleanField(default=False)
+    mailing = models.ForeignKey(MailingList, on_delete=models.CASCADE, related_name='mailing')
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='client')
 
     def __str__(self):
         return str(self.datetime)

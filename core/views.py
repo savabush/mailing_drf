@@ -1,9 +1,7 @@
-from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
-from . import serializers, models
+from . import serializers
 from .services.clients import ClientServices
 from .services.mailing_list import MailingListServices
 
@@ -117,20 +115,27 @@ class GetMailingListOrCreateMailing(APIView):
 
 class UpdateOrDeleteMailingListView(APIView):
     """
-        API for get, update or delete client
+        API for get, update or delete mailing
 
         Example of PUT method:
             {
-            "phone": "79831575107",
-            "code_of_mobile_operator": 983,
-            "tag": "qwerty",
-            "timezone": "Europe/Moscow"
+            "datetime_of_start_mailing": "2022-08-09T20:00:00Z",
+            "text": "some text, which would be sent to clients",
+            "filters": {
+                "tag": "qwerty",
+                "code_of_mobile_operator": "983"
+            },
+            "datetime_of_end_mailing": "2022-08-09T23:00:00Z",
             }
 
             OR
 
             {
-            "tag": "qwerty"
+            "text": "some text, which would be sent to clients",
+            "filters": {
+                "tag": "qwerty",
+                "code_of_mobile_operator": "983"
+            }
             }
 
         """

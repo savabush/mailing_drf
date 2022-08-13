@@ -9,7 +9,7 @@ class MailingListServices(AbstractServices):
     @classmethod
     def validate_data_for_post_method(cls, serializer):
         serializer.is_valid(raise_exception=True)
-        validated_data = serializer.data
+        validated_data = serializer.validated_data
         return validated_data
 
     @classmethod
