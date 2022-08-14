@@ -1,9 +1,14 @@
+from django.core.validators import RegexValidator
 from django.db import models
 
 
 class Client(models.Model):
-    phone = models.CharField(max_length=11, unique=True)
-    code_of_mobile_operator = models.CharField(max_length=3)
+    phone_regex = RegexValidator(
+        regex=r'7\d{10}',
+        message="The client's phone number in the format 7XXXXXXXXXX (X - number from 0 to 9)"
+    )
+    phone = models.CharField(max_length=11, unique=True, validators=[phone_regex])
+    code_of_mobile_operator = models.CharField(max_length=3, editable=False)
     tag = models.CharField(max_length=10)
 
     import pytz
@@ -13,6 +18,11 @@ class Client(models.Model):
 
     def __str__(self):
         return self.phone
+
+    def save(self, force_insert=False, force_update=False, using=None,
+             update_fields=None):
+        self.code_of_mobile_operator = str(self.phone)[1:4]
+        return super().save(force_insert, force_update, using, update_fields)
 
 
 class MailingList(models.Model):

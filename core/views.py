@@ -17,8 +17,7 @@ class GetClientsOrCreateClientView(APIView):
 
     Example of POST method:
         {
-        "phone": "79831575107",
-        "code_of_mobile_operator": 983,
+        "phone": "79831575107"
         "tag": "qwerty",
         "timezone": "Europe/Moscow"
         }
@@ -35,7 +34,7 @@ class GetClientsOrCreateClientView(APIView):
         validated_data_of_client = ClientServices.validate_data_for_post_method(serializer=client_serializer)
 
         tag = validated_data_of_client['tag']
-        code_of_mobile_operator = validated_data_of_client['code_of_mobile_operator']
+        code_of_mobile_operator = validated_data_of_client['phone'][1:4]
 
         queryset_of_mailing_list_with_filters = MailingListServices.searching_by_filters(
             tag=tag,
@@ -96,7 +95,7 @@ class UpdateOrDeleteClientView(APIView):
         )
 
         tag = validated_data_of_client['tag']
-        code_of_mobile_operator = validated_data_of_client['code_of_mobile_operator']
+        code_of_mobile_operator = validated_data_of_client['phone'][1:4]
 
         queryset_of_mailing_list_with_filters = MailingListServices.searching_by_filters(
             tag=tag,
