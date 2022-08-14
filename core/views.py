@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from . import serializers
 from .services.clients import ClientServices
 from .services.mailing_list import MailingListServices
+from .services.messages import MessageServices
 
 
 class GetClientsOrCreateClientView(APIView):
@@ -30,13 +31,29 @@ class GetClientsOrCreateClientView(APIView):
         return Response(data=validated_data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        serializer = serializers.ClientSerializer(data=request.data)
-        validated_data = ClientServices.validate_data_for_post_method(serializer=serializer)
-        ClientServices.create(validated_data=validated_data, serializer=serializer)
+        client_serializer = serializers.ClientSerializer(data=request.data)
+        validated_data_of_client = ClientServices.validate_data_for_post_method(serializer=client_serializer)
 
+        tag = validated_data_of_client['tag']
+        code_of_mobile_operator = validated_data_of_client['code_of_mobile_operator']
 
+        queryset_of_mailing_list_with_filters = MailingListServices.searching_by_filters(
+            tag=tag,
+            code_of_mobile_operator=code_of_mobile_operator
+        )
+        client = ClientServices.create(validated_data=validated_data_of_client, serializer=client_serializer)
 
-        return Response(data=validated_data, status=status.HTTP_200_OK)
+        if queryset_of_mailing_list_with_filters:
+            for mailing in queryset_of_mailing_list_with_filters:
+                data = {
+                    'mailing': mailing.id,
+                    'client': client.id
+                }
+                message_serializer = serializers.MessageSerializer(data=data)
+                validated_data_of_message = MessageServices.validate_data(serializer=message_serializer)
+                MessageServices.create(validated_data=validated_data_of_message, serializer=message_serializer)
+
+        return Response(data=validated_data_of_client, status=status.HTTP_200_OK)
 
 
 class UpdateOrDeleteClientView(APIView):
@@ -60,7 +77,7 @@ class UpdateOrDeleteClientView(APIView):
         """
 
     def get(self, request, client_id):
-        validated_data = ClientServices.validate_data_for_get_method_to_get_detail_info(
+        validated_data = ClientServices.validate_data_to_get_detail_info(
             client_id=client_id,
             data=request.data
         )
@@ -68,16 +85,34 @@ class UpdateOrDeleteClientView(APIView):
 
     def put(self, request, client_id):
         data = request.data
-        client = ClientServices.update(client_id=client_id, data=data)
 
-        validated_data = ClientServices.validate_data_for_put_method(
+        queryset_of_messages_by_client = ClientServices.get_queryset_of_messages_by_client_id(client_id=client_id)
+        queryset_of_messages_by_client.delete()
+
+        client = ClientServices.update(client_id=client_id, data=data)
+        validated_data_of_client = ClientServices.validate_data_for_put_method(
             client_instance=client,
             data=data
         )
 
+        tag = validated_data_of_client['tag']
+        code_of_mobile_operator = validated_data_of_client['code_of_mobile_operator']
 
+        queryset_of_mailing_list_with_filters = MailingListServices.searching_by_filters(
+            tag=tag,
+            code_of_mobile_operator=code_of_mobile_operator
+        )
+        if queryset_of_mailing_list_with_filters:
+            for mailing in queryset_of_mailing_list_with_filters:
+                data = {
+                    'mailing': mailing.id,
+                    'client': client.id
+                }
+                message_serializer = serializers.MessageSerializer(data=data)
+                validated_data_of_message = MessageServices.validate_data(serializer=message_serializer)
+                MessageServices.create(validated_data=validated_data_of_message, serializer=message_serializer)
 
-        return Response(data=validated_data, status=status.HTTP_200_OK)
+        return Response(data=validated_data_of_client, status=status.HTTP_200_OK)
 
     def delete(self, request, client_id):
         ClientServices.delete(client_id=client_id)

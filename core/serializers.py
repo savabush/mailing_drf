@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from . import models
 
@@ -29,3 +30,21 @@ class MailingListSerializer(serializers.ModelSerializer):
 
     def get_count_of_unsent(self, obj):
         return len(obj.mailing.filter(status=False))
+
+
+class MessageSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.Message
+        fields = '__all__'
+
+    def create(self, validated_data):
+        client_id = validated_data['client']
+        client = get_object_or_404(models.Client, id=client_id)
+        mailing_id = validated_data['mailing']
+        mailing = get_object_or_404(models.MailingList, id=mailing_id)
+        new_validated_data = {
+            'client': client,
+            'mailing': mailing
+        }
+        return super().create(validated_data=new_validated_data)

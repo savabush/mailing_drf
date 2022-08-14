@@ -6,6 +6,11 @@ from core.services.abstract_services import AbstractServices
 
 class ClientServices(AbstractServices):
 
+    @staticmethod
+    def _get_client_by_id(client_id):
+        client = get_object_or_404(models.Client, id=client_id)
+        return client
+
     @classmethod
     def validate_data_for_post_method(cls, serializer):
         serializer.is_valid(raise_exception=True)
@@ -20,8 +25,8 @@ class ClientServices(AbstractServices):
         return validated_data
 
     @classmethod
-    def validate_data_for_get_method_to_get_detail_info(cls, client_id, data):
-        client = get_object_or_404(models.Client, id=client_id)
+    def validate_data_to_get_detail_info(cls, client_id, data):
+        client = cls._get_client_by_id(client_id=client_id)
         serializer = serializers.ClientSerializer(client, data=data, partial=True)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.data
@@ -36,11 +41,11 @@ class ClientServices(AbstractServices):
 
     @classmethod
     def create(cls, validated_data, serializer):
-        serializer.create(validated_data)
+        return serializer.create(validated_data)
 
     @classmethod
     def update(cls, client_id, data):
-        client = get_object_or_404(models.Client, id=client_id)
+        client = cls._get_client_by_id(client_id=client_id)
         for field, value in data.items():
             if hasattr(client, field):
                 setattr(client, field, value)
@@ -51,5 +56,10 @@ class ClientServices(AbstractServices):
 
     @classmethod
     def delete(cls, client_id):
-        client = get_object_or_404(models.Client, id=client_id)
+        client = cls._get_client_by_id(client_id=client_id)
         client.delete()
+
+    @classmethod
+    def get_queryset_of_messages_by_client_id(cls, client_id):
+        client = cls._get_client_by_id(client_id=client_id)
+        return client.client.all()

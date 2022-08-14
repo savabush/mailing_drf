@@ -1,5 +1,6 @@
 from core import serializers, models
 from django.shortcuts import get_list_or_404, get_object_or_404
+from django.db.models import Q
 from rest_framework.exceptions import ValidationError
 from core.services.abstract_services import AbstractServices
 
@@ -53,3 +54,10 @@ class MailingListServices(AbstractServices):
     def delete(cls, mailing_id):
         mailing_instance = get_object_or_404(models.MailingList, id=mailing_id)
         mailing_instance.delete()
+
+    @classmethod
+    def searching_by_filters(cls, tag, code_of_mobile_operator):
+        queryset = models.MailingList.objects.filter(
+            Q(filters__tag=tag) | Q(filters__code_of_mobile_operator=code_of_mobile_operator)
+        )
+        return queryset
