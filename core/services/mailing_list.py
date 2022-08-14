@@ -7,6 +7,11 @@ from core.services.abstract_services import AbstractServices
 
 class MailingListServices(AbstractServices):
 
+    @staticmethod
+    def _get_mailing_by_id(mailing_id):
+        client = get_object_or_404(models.MailingList, id=mailing_id)
+        return client
+
     @classmethod
     def validate_data_for_post_method(cls, serializer):
         serializer.is_valid(raise_exception=True)
@@ -37,7 +42,7 @@ class MailingListServices(AbstractServices):
 
     @classmethod
     def create(cls, validated_data, serializer):
-        serializer.create(validated_data)
+        return serializer.create(validated_data)
 
     @classmethod
     def update(cls, mailing_id, data):
@@ -61,3 +66,8 @@ class MailingListServices(AbstractServices):
             Q(filters__tag=tag) | Q(filters__code_of_mobile_operator=code_of_mobile_operator)
         )
         return queryset
+
+    @classmethod
+    def get_queryset_of_messages_by_mailing_id(cls, mailing_id):
+        mailing = cls._get_mailing_by_id(mailing_id=mailing_id)
+        return mailing.mailing.all()

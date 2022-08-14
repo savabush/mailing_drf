@@ -1,5 +1,6 @@
 from core import serializers, models
 from django.shortcuts import get_list_or_404, get_object_or_404
+from django.db.models import Q
 from rest_framework.exceptions import ValidationError
 from core.services.abstract_services import AbstractServices
 
@@ -63,3 +64,10 @@ class ClientServices(AbstractServices):
     def get_queryset_of_messages_by_client_id(cls, client_id):
         client = cls._get_client_by_id(client_id=client_id)
         return client.client.all()
+
+    @classmethod
+    def searching_by_filters(cls, tag, code_of_mobile_operator):
+        queryset = models.Client.objects.filter(
+            Q(tag=tag) | Q(code_of_mobile_operator=code_of_mobile_operator)
+        )
+        return queryset

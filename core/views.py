@@ -140,12 +140,29 @@ class GetMailingListOrCreateMailing(APIView):
 
     def post(self, request):
         serializer = serializers.MailingListSerializer(data=request.data)
-        validated_data = MailingListServices.validate_data_for_post_method(serializer=serializer)
-        MailingListServices.create(validated_data=validated_data, serializer=serializer)
+        validated_data_of_mailing = MailingListServices.validate_data_for_post_method(serializer=serializer)
 
+        tag = validated_data_of_mailing['filters'].get('tag')
+        code_of_mobile_operator = validated_data_of_mailing['filters'].get('code_of_mobile_operator')
 
+        queryset_of_clients_with_filters = ClientServices.searching_by_filters(
+            tag=tag,
+            code_of_mobile_operator=code_of_mobile_operator
+        )
 
-        return Response(data=validated_data, status=status.HTTP_200_OK)
+        mailing = MailingListServices.create(validated_data=validated_data_of_mailing, serializer=serializer)
+
+        if queryset_of_clients_with_filters:
+            for client in queryset_of_clients_with_filters:
+                data = {
+                    'mailing': mailing.id,
+                    'client': client.id
+                }
+                message_serializer = serializers.MessageSerializer(data=data)
+                validated_data_of_message = MessageServices.validate_data(serializer=message_serializer)
+                MessageServices.create(validated_data=validated_data_of_message, serializer=message_serializer)
+
+        return Response(data=validated_data_of_mailing, status=status.HTTP_200_OK)
 
 
 class UpdateOrDeleteMailingListView(APIView):
@@ -184,16 +201,37 @@ class UpdateOrDeleteMailingListView(APIView):
 
     def put(self, request, mailing_id):
         data = request.data
-        mailing_instance = MailingListServices.update(mailing_id=mailing_id, data=data)
 
-        validated_data = MailingListServices.validate_data_for_put_method(
+        queryset_of_messages_by_mailing = MailingListServices.get_queryset_of_messages_by_mailing_id(
+            mailing_id=mailing_id
+        )
+        queryset_of_messages_by_mailing.delete()
+
+        mailing_instance = MailingListServices.update(mailing_id=mailing_id, data=data)
+        validated_data_of_mailing = MailingListServices.validate_data_for_put_method(
             mailing_instance=mailing_instance,
             data=data
         )
 
+        tag = validated_data_of_mailing['filters'].get('tag')
+        code_of_mobile_operator = validated_data_of_mailing['filters'].get('code_of_mobile_operator')
 
+        queryset_of_clients_with_filters = ClientServices.searching_by_filters(
+            tag=tag,
+            code_of_mobile_operator=code_of_mobile_operator
+        )
 
-        return Response(data=validated_data, status=status.HTTP_200_OK)
+        if queryset_of_clients_with_filters:
+            for client in queryset_of_clients_with_filters:
+                data = {
+                    'mailing': mailing_instance.id,
+                    'client': client.id
+                }
+                message_serializer = serializers.MessageSerializer(data=data)
+                validated_data_of_message = MessageServices.validate_data(serializer=message_serializer)
+                MessageServices.create(validated_data=validated_data_of_message, serializer=message_serializer)
+
+        return Response(data=validated_data_of_mailing, status=status.HTTP_200_OK)
 
     def delete(self, request, mailing_id):
         MailingListServices.delete(mailing_id=mailing_id)
