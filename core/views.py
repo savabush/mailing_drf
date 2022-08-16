@@ -16,7 +16,8 @@ class GetClientsOrCreateClientView(APIView):
         operation_id='Get all clients',
         responses={
             '200': serializers.ClientSerializer(many=True)
-        }
+        },
+        tags=['CLIENTS', 'GET', 'LIST']
     )
     def get(self, request):
         query_params = {field: value for field, value in request.query_params.items()}
@@ -38,7 +39,8 @@ class GetClientsOrCreateClientView(APIView):
                 "tag": "qwerty",
                 "timezone": "Europe/Moscow"
                 }
-        """
+        """,
+        tags=['CLIENTS', 'CREATE', 'POST']
     )
     def post(self, request):
         client_serializer = serializers.ClientSerializer(data=request.data)
@@ -54,7 +56,8 @@ class UpdateOrDeleteClientView(APIView):
         operation_id='Get client by id',
         responses={
             '200': serializers.ClientSerializer()
-        }
+        },
+        tags=['CLIENTS', 'GET', 'ID']
     )
     def get(self, request, client_id):
         validated_data = ClientServices.validate_data_to_get_detail_info(
@@ -85,7 +88,8 @@ class UpdateOrDeleteClientView(APIView):
             {
             "tag": "qwerty"
             }
-        """
+        """,
+        tags=['PUT', 'CLIENTS', 'ID']
     )
     def put(self, request, client_id):
         data = request.data
@@ -100,7 +104,8 @@ class UpdateOrDeleteClientView(APIView):
         operation_id='Delete a client',
         responses={
             '200': 'success'
-        }
+        },
+        tags=['DELETE', 'CLIENTS', 'ID']
     )
     def delete(self, request, client_id):
         ClientServices.delete(client_id=client_id)
@@ -117,7 +122,8 @@ class GetMailingListOrCreateMailing(APIView):
         operation_id='Get all mailings',
         responses={
             '200': serializers.MailingListSerializer(many=True)
-        }
+        },
+        tags=['MAILINGS', 'GET', 'LIST']
     )
     def get(self, request):
         validated_data = MailingListServices.validate_data_for_get_method_to_get_list()
@@ -139,7 +145,8 @@ class GetMailingListOrCreateMailing(APIView):
                 "filters": {"tag": "qwerty", "code_of_mobile_operator": "983"},
                 "datetime_of_end_mailing": "2022-08-09 23:00:00"
                 }
-        """
+        """,
+        tags=['MAILINGS', 'CREATE', 'POST']
     )
     def post(self, request):
         serializer = serializers.MailingListSerializer(data=request.data)
@@ -157,7 +164,8 @@ class UpdateOrDeleteMailingListView(APIView):
         operation_id='Get mailing by id',
         responses={
             '200': serializers.ClientSerializer()
-        }
+        },
+        tags=['MAILINGS', 'GET', 'ID']
     )
     def get(self, request, mailing_id):
         validated_data = MailingListServices.validate_data_for_get_method_to_get_detail_info(
@@ -195,7 +203,8 @@ class UpdateOrDeleteMailingListView(APIView):
                     "code_of_mobile_operator": "983"
                     }
                 }
-        """
+        """,
+        tags=['MAILINGS', 'ID', 'PUT']
     )
     def put(self, request, mailing_id):
         data = request.data
@@ -210,7 +219,8 @@ class UpdateOrDeleteMailingListView(APIView):
         operation_id='Delete a client',
         responses={
             '200': 'success'
-        }
+        },
+        tags=['DELETE', 'MAILINGS', 'ID']
     )
     def delete(self, request, mailing_id):
         MailingListServices.delete(mailing_id=mailing_id)
