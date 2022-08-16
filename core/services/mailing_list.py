@@ -1,9 +1,10 @@
 from core import serializers, models
+import datetime
 from django.shortcuts import get_list_or_404, get_object_or_404
 from django.db.models import Q
-from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 from core.services.abstract_services import AbstractServices
+import pytz
 
 
 class MailingListServices(AbstractServices):
@@ -72,8 +73,3 @@ class MailingListServices(AbstractServices):
     def get_queryset_of_messages_by_mailing_id(cls, mailing_id):
         mailing = cls._get_mailing_by_id(mailing_id=mailing_id)
         return mailing.mailing.all()
-
-    @classmethod
-    def to_send(cls, mailing_instance):
-        now = timezone.now()
-        return mailing_instance.datetime_of_start_mailing <= now <= mailing_instance.datetime_of_end_mailing
