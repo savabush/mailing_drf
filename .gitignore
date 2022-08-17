@@ -10,3 +10,4 @@ env/
 venv/
 .idea/
 .pytest_cache
+data
