@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save
 from django.db.models import Q
 from django.dispatch import receiver
-from django.shortcuts import get_object_or_404, get_list_or_404
+from django.shortcuts import get_object_or_404
 from .tasks import send_message
 from .models import Message, MailingList, Client
 from .serializers import MessageSerializer
@@ -14,7 +14,7 @@ def send_message_to_task_queue(sender, instance, created, **kwargs):
         tag = instance.filters.get('tag')
         code_of_mobile_operator = instance.filters.get('code_of_mobile_operator')
 
-        clients = get_list_or_404(Client, Q(tag=tag) | Q(code_of_mobile_operator=code_of_mobile_operator))
+        clients = Client.objects.filter(Q(tag=tag) | Q(code_of_mobile_operator=code_of_mobile_operator))
 
         for client in clients:
             message_data = {
